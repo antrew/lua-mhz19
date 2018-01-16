@@ -6,5 +6,7 @@ Lua+ESP8266, read MHZ19, send to LogStash
 Firmware needs to be built with the following modules:
 
 * gpio
+* http
+* sjson
 * tmr
 * wifi
