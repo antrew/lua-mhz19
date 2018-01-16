@@ -7,3 +7,4 @@ Firmware needs to be built with the following modules:
 
 * gpio
 * tmr
+* wifi
