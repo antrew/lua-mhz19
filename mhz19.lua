@@ -42,6 +42,7 @@ do
     end
 
     local function sendReadingsToLogstash()
+        print("sending readings to logstash")
         local message = {}
 
         -- get a median of the latest CO2 readings
@@ -63,17 +64,18 @@ do
     end
 
     -- configure reading of MHZ19
-    -- gpio.mode(MHZ19_PIN, gpio.INT)
-    -- trig(MHZ19_PIN, TRIGGER_ON, mhz19InterruptHandler)
+    gpio.mode(MHZ19_PIN, gpio.INT)
+    trig(MHZ19_PIN, TRIGGER_ON, mhz19InterruptHandler)
 
     -- TODO log wifi status events (if it isn't logged already)
     -- TODO wifi.eventmon...
 
     -- connect to WiFi
     wifi.setmode(wifi.STATION)
-    local WIFI_SSID = "${WIFI_SSID}"
-    local WIFI_PASSWORD = "${WIFI_PASSWORD}"
-    wifi.sta.config(WIFI_SSID, WIFI_PASSWORD)
+    local wifiConfig = {}
+    wifiConfig["ssid"] = WIFI_SSID
+    wifiConfig["pwd"] = WIFI_PASSWORD
+    wifi.sta.config(wifiConfig)
     wifi.sta.connect()
 
     -- configure sending to LogStash
