@@ -6,6 +6,7 @@ local SEND_INTERVAL_MS = 30 * 1000
 WIFI_SSID = "${WIFI_SSID}"
 WIFI_PASSWORD = "${WIFI_PASSWORD}"
 LOGSTASH_URL = "${LOGSTASH_URL}"
+DEVICE_ID = "${DEVICE_ID}"
 
 local lowDuration
 local highDuration
@@ -18,42 +19,44 @@ local function calculateCo2Ppm(highDuration, lowDuration)
 end
 
 local function mhz19InterruptHandler(level, timestamp)
-    print(level, timestamp)
-    -- TODO log event
+    print("mhz19InterruptHandler", level, timestamp)
     if (level) then
         highDuration = timestamp - lastTimestamp
     else
         lowDuration = timestamp - lastTimestamp
         local co2 = calculateCo2Ppm(highDuration, lowDuration)
         table.insert(latestMeasurements, co2)
-        -- TODO log CO2 reading
+        print("co2", co2)
     end
     lastTimestamp = timestamp
 end
 
 local function httpPostCallback(status_code, body, headers)
     if (status_code < 0) then
-        -- TODO log error
+        print("http error", status_code)
     else
-        -- TODO log success
+        print("http done", status_code)
     end
 end
 
 local function sendReadingsToLogstash()
+    local message = {}
+
     -- get a median of the latest CO2 readings
     local measurements = latestMeasurements
     latestMeasurements = {}
-    table.sort(measurements)
-    local median = measurements[math.ceil(#measurements / 2 + 1)]
+    if (#measurements > 0) then
+        table.sort(measurements)
+        local median = measurements[math.ceil(#measurements / 2 + 1)]
+        message["co2"] = median
+    end
+
+    -- TODO integrate temperature and humidity sensors
+    message["temperature"] = 0
+    message["humidity"] = 0
 
     -- POST to LogStash
-    local message = {}
-    message["co2"] = median
-    message["temperature"] = TODO
-    message["humidity"] = TODO
-
     local jsonMessaage = sjson.encode(message)
-
     http.post(LOGSTASH_URL, nil, jsonMessaage, httpPostCallback)
 end
 
