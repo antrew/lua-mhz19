@@ -1,6 +1,7 @@
 do
 
-    local MHZ19_PIN = 1
+    -- connect MH-Z19 PWM output to D3
+    local MHZ19_PIN = 3
     local TRIGGER_ON = "both"
     local SEND_INTERVAL_MS = 30 * 1000
 
