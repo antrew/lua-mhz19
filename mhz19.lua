@@ -3,7 +3,7 @@ do
     -- connect MH-Z19 PWM output to D3
     local MHZ19_PIN = 3
     local TRIGGER_ON = "both"
-    local SEND_INTERVAL_MS = 30 * 1000
+    local SEND_INTERVAL_MS = 10 * 1000
 
     -- use envsubst to replace the placeholders with actual values
     local WIFI_SSID = "${WIFI_SSID}"
@@ -11,9 +11,9 @@ do
     local LOGSTASH_URL = "${LOGSTASH_URL}"
     local DEVICE_ID = "${DEVICE_ID}"
 
-    local lowDuration
-    local highDuration
-    local lastTimestamp
+    local lowDuration = 0
+    local highDuration = 0
+    local lastTimestamp = 0
 
     local latestMeasurements = {}
 
@@ -23,7 +23,7 @@ do
 
     local function mhz19InterruptHandler(level, timestamp)
         print("mhz19InterruptHandler", level, timestamp)
-        if (level) then
+        if (level == gpio.LOW) then
             highDuration = timestamp - lastTimestamp
         else
             lowDuration = timestamp - lastTimestamp
@@ -45,6 +45,7 @@ do
     local function sendReadingsToLogstash()
         print("sending readings to logstash")
         local message = {}
+        message["device_id"] = DEVICE_ID
 
         -- get a median of the latest CO2 readings
         local measurements = latestMeasurements
@@ -52,7 +53,10 @@ do
         if (#measurements > 0) then
             table.sort(measurements)
             local median = measurements[math.ceil(#measurements / 2 + 1)]
+            print("CO2 median", median)
             message["co2"] = median
+        else
+            print("WARN: no CO2 measurements found")
         end
 
         -- TODO integrate temperature and humidity sensors
@@ -61,7 +65,8 @@ do
 
         -- POST to LogStash
         local jsonMessaage = sjson.encode(message)
-        http.post(LOGSTASH_URL, nil, jsonMessaage, httpPostCallback)
+        local headers = 'Content-Type: application/json\r\n'
+        http.post(LOGSTASH_URL, headers, jsonMessaage, httpPostCallback)
     end
 
     -- configure reading of MHZ19
