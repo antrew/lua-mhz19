@@ -65,7 +65,7 @@ do
 
     -- configure reading of MHZ19
     gpio.mode(MHZ19_PIN, gpio.INT)
-    trig(MHZ19_PIN, TRIGGER_ON, mhz19InterruptHandler)
+    gpio.trig(MHZ19_PIN, TRIGGER_ON, mhz19InterruptHandler)
 
     -- TODO log wifi status events (if it isn't logged already)
     -- TODO wifi.eventmon...
