@@ -2,6 +2,7 @@ do
 
     -- connect MH-Z19 PWM output to D3
     local MHZ19_PIN = 3
+    local DHT_PIN = 4
     local TRIGGER_ON = "both"
     local SEND_INTERVAL_MS = 10 * 1000
 
@@ -59,9 +60,19 @@ do
             print("WARN: no CO2 measurements found")
         end
 
-        -- TODO integrate temperature and humidity sensors
-        message["temperature"] = 0
-        message["humidity"] = 0
+        -- read temperature and humidity from DHT
+        local status, temp, humi, temp_dec, humi_dec = dht.read(DHT_PIN)
+        if status == dht.OK then
+            print("DHT Temperature:", temp, temp_dec, "Humidity:", humi, humi_dec)
+            message["temperature"] = temp
+            message["humidity"] = humi
+        elseif status == dht.ERROR_CHECKSUM then
+            print("DHT Checksum error")
+        elseif status == dht.ERROR_TIMEOUT then
+            print("DHT timed out")
+        else
+            print("DHT unknown status")
+        end
 
         -- POST to LogStash
         local jsonMessaage = sjson.encode(message)
